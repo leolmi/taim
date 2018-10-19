@@ -21,3 +21,12 @@ body, html {
     height: 14px;
     background: url(assets/github.svg);
 }
+
+[template] {
+    display: none;
+}
+
+[button] {
+
+}
+
