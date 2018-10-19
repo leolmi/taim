@@ -1,0 +1,20 @@
+{
+  "name": "taim",
+  "version": "1.0.0",
+  "description": "times calculator",
+  "homepage": "https://github.com/leolmi/taim",
+  "license": "MIT",
+  "keywords": [
+    "time",
+    "calculator"
+  ],
+  "author": {
+    "name": "Leo",
+    "email": "leo.olmi@gmail.com",
+    "url": "https://github.com/leolmi/taim"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leolmi/taim"
+  }
+}
