@@ -2,17 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>taim</title>
+    <title>krumiro</title>
     <link rel="stylesheet" href="app.css" />
 </head>
 <body>
-    <h1>TAIM...</h1>
-    <div id="lines"></div>
-    <div id="line-template" template>
-        <div>ciccio bello</div>
+    <div class="taim-container">
+        <div class="taim-accent title">krumiro <span>light</span></div>
+        <div class="line-desc"><span>ore</span><span>permesso</span></div>
+        <div class="taim-line taim-impo">
+            <input class="taim-input taim-input-o" id="day-hours" type="text" onchange="calc(event)">
+            <input class="taim-input taim-input-p" id="day-perm" type="text" onchange="calc(event)">
+        </div>
+        <br>
+        <div class="line-desc"><span>E</span><span>U</span></div>
+        <div id="lines">
+        </div>
+        <div id="line-template" template>
+            <div class="taim-line" id="line-id">
+                <input class="taim-input taim-input-e" id="e-id" type="text" onchange="calc(event)">
+                <input class="taim-input taim-input-u" id="u-id" type="text" onchange="calc(event)">
+            </div>
+        </div>
+        <div class="taim-accent" id="exit-time"></div>
     </div>
-    <button button onclick="addLine(event)">NEW LINE</button>
-
     <script src="app.js"></script>
 </body>
 </html>
