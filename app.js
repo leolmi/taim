@@ -268,7 +268,7 @@ const default_options = {
     const type = e.target.id[0];
     const index = parseInt(e.target.id.substr(2));
     const tm = u.time(value);
-    taims[index][type] = tm.t;
+    if (index>0) taims[index][type] = tm.t;
     e.target.value = tm.v;
     _check(index, type);
     _refresh();
