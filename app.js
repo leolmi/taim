@@ -51,7 +51,7 @@ const u = {
         values.push(parseInt(m[1]));
       }
       return u.E(values[0], values[1]);
-    } else if (typeof(str) === 'number') {
+    } else if (typeof(str) === 'number' && str > 0) {
       const h = Math.floor(str / 60);
       const m = str - (h * 60);
       return u.E(h, m);
@@ -92,6 +92,7 @@ const default_options = {
   const line = u.i('line-template').innerHTML;
   const dayHours = u.i('day-hours');
   const dayPerm = u.i('day-perm');
+  const BODY = document.getElementsByTagName('BODY')[0];
   let _counter=0;
   const taims = {};
   const state = {};
@@ -107,6 +108,10 @@ const default_options = {
     line_ele.innerHTML = line.replace(/-id/gm, '-'+_counter);
     lines.appendChild(line_ele);
     taims[_counter] = {e:0, u:0, d:0};
+    if (!state.initialized) {
+      state.initialized = true;
+      u.i('e-' + _counter).focus();
+    }
     return _counter;
   }
 
@@ -203,6 +208,14 @@ const default_options = {
     u.i('exit-time').innerHTML = state.exit;
   }
 
+  function _checkTime() {
+    const now = new Date();
+    const n = u.E(now.getHours(), now.getMinutes());
+    const elapsedm = state.exitm - n.t;
+    const e = u.time(elapsedm);
+    u.i('exit-elapsed').innerHTML = e.v;
+  }
+
   function _focus(id, type) {
     setTimeout(() => {
       const next = (type === 'e') ? u.i('u-' + id) : u.i('e-' + (id + 1));
@@ -269,6 +282,8 @@ const default_options = {
     _parse(txt);
     _refresh();
   }, false);
+
+  setInterval(() => _checkTime(), 1000);
 
   _addLine();
 })(this);

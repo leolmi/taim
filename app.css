@@ -23,6 +23,9 @@ body, html {
     font-family: monospace;
     display: block;
 }
+.taim-sub-title {
+    font-size: 1em;
+}
 
 .taim-icon {
     display: block;
