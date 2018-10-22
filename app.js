@@ -64,8 +64,15 @@ const u = {
   im(id) {
     const v = u.input(id);
     return u.time(v);
+  },
+  toggleClass(e, cn, active) {
+    if (active) {
+      if (!e.classList.contains(cn)) e.classList.add(cn);
+    } else {
+      if (e.classList.contains(cn)) e.classList.remove(cn);
+    }
   }
-};
+ };
 // opzioni predefinite
 const default_options = {
   checknine: true,  //verifica l'ingresso dopo le 9:00
@@ -201,11 +208,13 @@ const default_options = {
     state.startm = firstE;
     state.exitm = r;
     state.exit = (r > 0) ? u.time(r).v : '?';
+    state.getout = firstE>0 && r>0;
 
     settings.dayHours = u.input('day-hours');
     settings.dayPerm = u.input('day-perm');
     storage.set('settings', JSON.stringify(settings));
     u.i('exit-time').innerHTML = state.exit;
+    u.toggleClass(BODY, 'get-out', state.getout);
   }
 
   function _checkTime() {
