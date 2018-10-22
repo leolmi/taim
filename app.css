@@ -3,7 +3,7 @@ body, html {
     background-color: #222;
     color: #ddd;
     margin: 0;
-    padding: 20px 0 0 0;
+    padding: 0;
     height: 100vh;
     width: 100vw;
 }
@@ -11,6 +11,7 @@ body, html {
 .taim-container {
     width: 204px;
     margin: 0 auto;
+    padding-top: 40px;
 }
 
 .taim-accent {
