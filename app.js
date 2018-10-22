@@ -208,13 +208,11 @@ const default_options = {
     state.startm = firstE;
     state.exitm = r;
     state.exit = (r > 0) ? u.time(r).v : '?';
-    state.getout = firstE>0 && r>0;
 
     settings.dayHours = u.input('day-hours');
     settings.dayPerm = u.input('day-perm');
     storage.set('settings', JSON.stringify(settings));
     u.i('exit-time').innerHTML = state.exit;
-    u.toggleClass(BODY, 'get-out', state.getout);
   }
 
   function _checkTime() {
@@ -223,6 +221,8 @@ const default_options = {
     const elapsedm = state.exitm - n.t;
     const e = u.time(elapsedm);
     u.i('exit-elapsed').innerHTML = e.v;
+    state.getout = state.exitm > default_options.min_e && elapsedm <= 0;
+    u.toggleClass(BODY, 'get-out', state.getout);
   }
 
   function _focus(id, type) {
