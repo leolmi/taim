@@ -10,10 +10,27 @@ body, html {
     overflow-x: hidden;
 }
 
+.hidden {
+    display: none;
+}
+
+.klok-container {
+    margin: -70px auto -40px auto;
+    max-width: 400px;
+}
+
+.klok-container #maintime {
+    font-size: 90px; }
+.klok-container #currenttime {
+    font-size: 40px; }
+.klok-container #worktime, .klok-container #pausetime, .klok-container #giftwtime, .klok-container #giftptime {
+    font-size: 30px; }
+.klok-container #maindesc {
+    font-size: 20px; }
+
 .taim-container {
     width: 204px;
     margin: 0 auto;
-    padding: 40px 0;
 }
 
 .taim-accent {
@@ -23,7 +40,8 @@ body, html {
     font-size: 3em;
 }
 .title {
-    margin-bottom: 20px;
+    margin-top: 20px;
+    margin-bottom: 40px;
 }
 .title > span {
     font-size: initial;
@@ -36,6 +54,8 @@ body, html {
 .taim-sub-title > span {
     margin: 0 10px;
 }
+
+
 #exit-elapsed {
     color: #666;
 }
@@ -67,7 +87,11 @@ input.taim-input {
     width: 80px;
     margin: 0 10px 0 0;
     text-align: center;
-    font-size: 1.6em;
+    font-size: 1.5em;
+}
+
+.taim-impo .taim-input {
+    background-color: #777;
 }
 
 [template] {
@@ -124,3 +148,69 @@ body.get-out .taim-get-out {
 body.get-out {
     animation: pulse 1s ease infinite alternate;
 }
+
+
+/* pulse in SVG */
+svg.pulse-svg {
+    overflow: visible; }
+svg.pulse-svg.active .over-circle {
+    visibility: visible; }
+svg.pulse-svg.active .circle {
+    visibility: visible;
+    fill: yellow; }
+svg.pulse-svg.over {
+    position: fixed;
+    top: 0;
+    pointer-events: none; }
+svg.pulse-svg .over-circle {
+    visibility: hidden; }
+svg.pulse-svg .first-circle, svg.pulse-svg .second-circle, svg.pulse-svg .third-circle {
+    visibility: hidden;
+    transform: scale(0.5);
+    transform-origin: center center;
+    animation: pulse-me 3s linear infinite; }
+svg.pulse-svg .second-circle {
+    animation-delay: 1s; }
+svg.pulse-svg .third-circle {
+    animation-delay: 2s; }
+
+/* pulse in CSS */
+.pulse-css {
+    width: 50px;
+    height: 50px;
+    -webkit-border-radius: 25px;
+    -moz-border-radius: 25px;
+    border-radius: 25px;
+    background: yellowgreen;
+    position: relative; }
+.pulse-css:before, .pulse-css:after {
+    content: '';
+    width: 50px;
+    height: 50px;
+    -webkit-border-radius: 25px;
+    -moz-border-radius: 25px;
+    border-radius: 25px;
+    background-color: yellowgreen;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    transform: scale(0.5);
+    transform-origin: center center;
+    animation: pulse-me 3s linear infinite; }
+.pulse-css:after {
+    animation-delay: 2s; }
+
+@keyframes pulse-me {
+    0% {
+        transform: scale(0.5);
+        opacity: 0; }
+    50% {
+        opacity: 0.1; }
+    70% {
+        opacity: 0.09; }
+    100% {
+        transform: scale(5);
+        opacity: 0; } }

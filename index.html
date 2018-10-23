@@ -9,12 +9,36 @@
 <body>
     <div class="taim-container">
         <div class="taim-accent title">krumiro <span>light</span></div>
+    </div>
+    <div class="klok-container">
+        <svg id="svg-klok" class="pulse-svg" width="100%" height="100%" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" version="1.1">
+            <circle class="circle first-circle" fill="#333" cx="300" cy="300" r="200"></circle>
+            <circle class="circle second-circle" fill="#333" cx="300" cy="300" r="200"></circle>
+            <circle class="circle third-circle" fill="#333" cx="300" cy="300" r="200"></circle>
+            <circle class="over-circle" fill="#222" cx="300" cy="300" r="200"></circle>
+            <path id="klok" fill="none" stroke="#333" stroke-width="60"></path>
+            <text id="currenttime" x="300" y="190" text-anchor="middle" fill="#666" onclick="toggleNow()"></text>
+            <text id="maindesc" x="300" y="220" text-anchor="middle" fill="#444">exit at</text>
+            <path id="klok-d" fill="none" stroke="rgba(154,205,50,.3)" stroke-width="60"></path>
+            <g id="klok-items" fill="none"></g>
+            <path id="klok-over-d" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="60"></path>
+            <path id="klok-out-d" fill="none" stroke="rgba(220,0,0,.7)" stroke-width="60"></path>
+            <path id="klok-outp-d" fill="none" stroke="rgba(220,0,0,.7)" stroke-width="60"></path>
+            <text id="maintime" x="300" y="300" text-anchor="middle" fill="yellowgreen" onclick="clickKlok()"></text>
+            <text id="worktime" x="240" y="360" text-anchor="middle" fill="yellowgreen"></text>
+            <text x="240" y="380" text-anchor="middle" fill="#444">work time</text>
+            <text id="giftwtime" x="240" y="416" text-anchor="middle" fill="tomato"></text>
+            <text id="pausetime" x="360" y="360" text-anchor="middle" fill="yellowgreen"></text>
+            <text x="360" y="380" text-anchor="middle" fill="#444">pause time</text>
+            <text id="giftptime" x="360" y="416" text-anchor="middle" fill="tomato"></text>
+        </svg>
+    </div>
+    <div class="taim-container">
         <div class="line-desc"><span>ore</span><span>permesso</span></div>
         <div class="taim-line taim-impo">
             <input class="taim-input taim-input-o" id="day-hours" type="text" onchange="calc(event)">
             <input class="taim-input taim-input-p" id="day-perm" type="text" onchange="calc(event)">
         </div>
-        <br>
         <div class="line-desc"><span>E</span><span>U</span></div>
         <div id="lines">
         </div>
@@ -24,18 +48,6 @@
                 <input class="taim-input taim-input-u" id="u-id" type="text" onchange="calc(event)">
             </div>
         </div>
-        <div class="taim-accent" id="exit-time"></div>
-        <div class="taim-accent taim-sub-title"><span id="exit-done"></span><span id="exit-elapsed"></span></div>
-        <div class="taim-accent taim-get-out taim-sub-title">GET OUT</div>
-    </div>
-    <div class="taim-graph">
-        <svg  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-              width="100%" height="100" viewBox="0 0 1000 100" preserveAspectRatio="none">
-            <rect height="100" width="1000" fill="#333"></rect>
-            <rect id="graph-base" height="100" width="0" fill="yellowgreen"></rect>
-            <rect id="graph-lunch" x="0" height="100" width="0" fill="rgba(200,100,100,.4)"></rect>
-            <g fill="none" id="grid-lines"></g>
-        </svg>
     </div>
     <script src="app.js"></script>
 </body>

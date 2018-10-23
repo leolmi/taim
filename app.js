@@ -27,6 +27,12 @@ const u = {
   isDate(date) {
     return Object.prototype.toString.call(date) === '[object Date]'
   },
+  isObject(obj) {
+    return Object.prototype.toString.call(obj) === '[object Object]'
+  },
+  isNaN(v) {
+    return v==='NaN' || (typeof(v)==='number' && isNaN(v));
+  },
   // costruisce un oggetto con le info dell'orario
   E(h, m, type) {
     if (u.isDate(h)) {
@@ -90,8 +96,9 @@ const u = {
   },
   set(id, an, av) {
     const e = u.i(id);
-    if (isNaN(av)) av = 0;
-    if (e) e.setAttribute(an, av);
+    if (!e) return;
+    if (u.isNaN(av)) av = 0;
+    typeof(av) === 'undefined' ? e.innerHTML = an : e.setAttribute(an, av);
   },
   format(str, o) {
     for(let pn in o) {
@@ -99,6 +106,13 @@ const u = {
       str = str.replace(rgx, o[pn]);
     }
     return str;
+  },
+  rad(CX, CY, r, a) {
+    const rdn = (a - 90) * Math.PI / 180.0;
+    return {
+      x: CX + (r * Math.cos(rdn)),
+      y: CY + (r * Math.sin(rdn))
+    };
   }
  };
 // opzioni predefinite
@@ -127,14 +141,25 @@ const default_options = {
   const line = u.i('line-template').innerHTML;
   const dayHours = u.i('day-hours');
   const dayPerm = u.i('day-perm');
-  const grid = u.i('grid-lines');
+  // const grid = u.i('grid-lines');
+  const klok = u.i('svg-klok');
   const BODY = document.getElementsByTagName('BODY')[0];
-  const line_template = '<line x1="{x}" y1="90" x2="{x}" y2="100" stroke="#222" stroke-width="4" />';
+  // const line_template = '<line x1="{x}" y1="90" x2="{x}" y2="100" stroke="#222" stroke-width="4" />';
+  const klok_item = '<path d="{d}" fill="none" stroke="yellowgreen" stroke-width="60"></path>';
   let _counter=0;
   const taims = {};
   const state = {
+    nowtime: true,
     lunch: {},
     lock: false
+  };
+  const klok_layout = {
+    main: 'klok',
+    center: {
+      x: 300,
+      y: 300
+    },
+    radius: 200
   };
 
   const settings = JSON.parse(storage.get('settings')||'{}');
@@ -257,21 +282,156 @@ const default_options = {
     settings.dayHours = u.input('day-hours');
     settings.dayPerm = u.input('day-perm');
     storage.set('settings', JSON.stringify(settings));
-    u.i('exit-time').innerHTML = state.exit;
+    // u.i('exit-time').innerHTML = state.exit;
   }
 
   function _checkTime() {
-    const now = new Date();
-    const n = u.E(now.getHours(), now.getMinutes());
-    const elapsedm = state.exitm - n.t;
-    const donem = n.t - state.startm;
-    const e = u.time(elapsedm);
-    const d = u.time(donem);
-    u.i('exit-elapsed').innerHTML = e.v;
-    u.i('exit-done').innerHTML = d.v;
+    state.now = u.now();
+    state.nowv = state.now.v;
+    const elapsedm = state.exitm - state.now.t;
     state.getout = state.exitm > default_options.min_e && elapsedm <= 0;
-    u.toggleClass(BODY, 'get-out', state.getout && !state.lock);
-    _graph(n);
+    // u.toggleClass(BODY, 'get-out', state.getout && !state.lock);
+    u.toggleClass(klok, 'active', state.getout && !state.lock);
+    // _graph(n);
+    _graph();
+  }
+
+  function _text(info) {
+    u.set('maintime', info.exit||'');
+    u.set('worktime', info.work||'');
+    u.set('pausetime', info.pause||'');
+    u.set('giftwtime', info.gift.w||'');
+    u.set('giftptime', info.gift.p||'');
+    _current();
+  }
+
+  function _current() {
+    const m = state.nowtime ? state.exitm :  Math.abs(state.exitm - state.now.t);
+    u.set('currenttime', u.time(m).v);
+  }
+
+  function _d(startAngle, endAngle) {
+    if (u.isObject(startAngle)) {
+      endAngle = startAngle.end - 1;
+      startAngle = startAngle.start;
+    }
+    if (endAngle > 360) endAngle = 360;
+    if (startAngle >= endAngle) return null;
+    const start = u.rad(klok_layout.center.x, klok_layout.center.y, klok_layout.radius, endAngle);
+    const end = u.rad(klok_layout.center.x, klok_layout.center.y, klok_layout.radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+    return [
+      'M', start.x, start.y,
+      'A', klok_layout.radius.toFixed(2), klok_layout.radius.toFixed(2), 0, largeArcFlag, 0, end.x, end.y
+    ].join(" ");
+  }
+
+  function _arc(name, startAngle, endAngle){
+    if (!name) {
+      name = klok_layout.main;
+      startAngle = 0;
+      endAngle = 359.99;
+    }
+    const d = _d(startAngle, endAngle);
+    u.set(name, 'd', d);
+  }
+
+  function _graph() {
+    const info = {
+      nowm: state.now.t,
+      workm: 0,
+      exitm: state.exitm,
+      exit: state.exit,
+      gift: {},
+      items: [],
+      tot: 0,
+      over: {},   // over time
+      out: {},    // out of time
+      angle(v) { return ((v - info.str) * 360) / (info.tot || 1); }
+    };
+    let pre;
+    _items().forEach((i) => {
+      if (i.e.t>0) {
+        if (!info.start) info.start = i.e.t;
+        const item = {};
+        item.EM = pre && pre.UM > i.e.t ? pre.UM + 10 : i.e.t;
+        item.UM = i.u.t > item.EM ? i.u.t : 0;
+        item.dt = item.UM > item.EM ? item.UM - item.EM : 0;
+        if (pre && item.dt <= 0) item.dt = pre.EM - 1 - item.EM;
+        info.items.push(item);
+        pre = item;
+      }
+    });
+    const first = info.items[0];
+    const last = info.items[info.items.length>0?info.items.length-1:0];
+    info.closed = !!last.UM;
+    if (!info.closed) {
+      last.UM = info.nowm >= last.EM ? info.nowm : last.EM + 10;
+      last.dt = last.UM - last.EM;
+    }
+    info.str = first.EM;
+    info.tot = info.exitm - first.EM;
+    info.items.forEach(function (i) {
+      i.start = info.angle(i.EM);
+      i.end = info.angle(i.UM);
+      i.d = _d(i);
+      info.workm += i.UM - i.EM;
+    });
+    info.work = u.time(info.workm).v;
+    info.done = info.closed && ((info.workm >= settings.targetworkm) || (settings.options.checkrange && info.nowm >= settings.options.max_u));
+    const now_angle = info.angle(info.nowm);
+    const end = info.done ? last.end : Math.max(last.end||0, now_angle);
+    // over tempo passato (tutto)
+    info.d = _d(first.start + 1, end - 1);
+    // over (tempo non passato)
+    if (last.UM > info.nowm) {
+      info.over.start = now_angle;
+      info.over.end = info.angle(last.UM);
+      info.over.d = _d(info.over);
+    }
+    // out (tempo oltre il limite)
+    // const max = Math.max(info.nowm, last.UM);
+    // if ((max > info.exitm) && !info.done) {
+    if (!info.done && (info.nowm > info.exitm)) {
+      info.out.start = info.angle(info.start);
+      info.out.end = info.angle(info.start + info.nowm - info.exitm);
+      info.out.d = _d(info.out);
+      info.gift.wm = (info.nowm - info.exitm);
+    } else if (info.done && (last.UM > info.exitm)) {
+      info.out.start = info.angle(info.start);
+      info.out.end = info.angle(info.start + last.UM - info.exitm);
+      info.out.d = _d(info.out);
+      info.gift.wm = (last.UM - info.exitm);
+    }
+    let p = 0;
+    if (info.done) {
+      p = last.UM - info.start - info.workm;
+    } else if (info.nowm - info.start > info.workm) {
+      p = info.nowm - info.workm - info.start;
+    }
+    info.pause = u.time(p).v;
+    // se la pausa è durata meno di 30 min
+    // mostra il delta non usufruito
+    if (settings.options.checklunch && p > 0 && p < 30 && info.items.length>1) {
+      info.outp = {
+        start: info.angle(last.EM),
+        end: info.angle(last.EM + 30 - p)
+      };
+      info.outp.d = _d(info.outp);
+      info.gift.pm = (30 - p);
+    }
+    info.gift.w = u.time(info.gift.wm).v;
+    info.gift.p = u.time(info.gift.pm).v;
+    //console.log('KLOK', info);
+    u.i('klok-items').innerHTML = info.items.map((i) => u.format(klok_item, {d:i.d})).join('\n');
+
+    u.set('klok-d', 'd', info.d);
+    u.set('klok-over-d', 'd', info.over.d||'');
+    u.set('klok-out-d', 'd', (info.out||{}).d||'');
+    u.set('klok-outp-d', 'd', (info.outp||{}).d||'');
+
+    _arc();
+    _text(info);
   }
 
   function _focus(id, type) {
@@ -326,28 +486,14 @@ const default_options = {
     }
   }
 
-  function _graph(now) {
-    const graph_width = 1000;
-    const _v = (x) => (((x - state.startm) * graph_width) / (state.exitm - state.startm)).toFixed(0);
-    const data = {
-      w1: _v(now.t),
-      x2: _v(state.lunch.startm),
-      w2: _v(state.lunch.endm) - _v(state.lunch.startm)
-    };
+  w.clickKlok = function() {
+    console.log('CLICK CLOK!');
+  };
 
-    u.set('graph-base', 'width', data.w1);
-    u.set('graph-lunch', 'x', data.x2);
-    u.set('graph-lunch', 'width', data.w2);
-
-    let lines = '';
-    if (state.exitm > state.startm) {
-      const d1 = state.startm + (60 - (state.startm % 60));
-      for (let i = d1; i < state.exitm; i += 60) {
-        lines += u.format(line_template, {x:  _v(i)}) + '\n';
-      }
-    }
-    grid.innerHTML = lines;
-  }
+  w.toggleNow = function() {
+    state.nowtime = !state.nowtime;
+    _current();
+  };
 
   w.calc = function(e) {
     state.lock = false;
@@ -360,6 +506,7 @@ const default_options = {
     _check(index, type);
     _refresh();
     _focus(index, type);
+    _checkTime();
   };
 
   w.addEventListener('paste', function(e){
@@ -371,10 +518,13 @@ const default_options = {
   }, false);
 
   w.addEventListener('click', function(e){
-    if (state.getout) state.lock = true;
+    if (state.getout) {
+      state.lock = true;
+      _checkTime();
+    }
   }, false);
 
-  setInterval(() => _checkTime(), 1000);
+  setInterval(() => _checkTime(), 30000);
 
   _addLine();
 })(this);
