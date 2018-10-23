@@ -306,7 +306,7 @@ const default_options = {
   }
 
   function _current() {
-    const m = state.nowtime ? state.exitm :  Math.abs(state.exitm - state.now.t);
+    const m = state.nowtime ? state.now.v :  Math.abs(state.exitm - state.now.t);
     u.set('currenttime', u.time(m).v);
   }
 
