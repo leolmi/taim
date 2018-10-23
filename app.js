@@ -1,3 +1,5 @@
+'use strict';
+
 // storage
 const storage = {
   prefix: 'KRUMIRO-LIGHT@',
@@ -71,6 +73,11 @@ const u = {
     } else {
       if (e.classList.contains(cn)) e.classList.remove(cn);
     }
+  },
+  set(id, an, av) {
+    const e = u.i(id);
+    if (isNaN(av)) av = 0;
+    if (e) e.setAttribute(an, av);
   }
  };
 // opzioni predefinite
@@ -102,7 +109,10 @@ const default_options = {
   const BODY = document.getElementsByTagName('BODY')[0];
   let _counter=0;
   const taims = {};
-  const state = {};
+  const state = {
+    lunch: {},
+    lock: false
+  };
 
   const settings = JSON.parse(storage.get('settings')||'{}');
   dayHours.value = settings.dayHours||'8';
@@ -150,6 +160,7 @@ const default_options = {
       firstE = 0, lastE = 0,
       lastok = false,
       lunch = false;
+    state.lunch = {};
     // la pausa pranzo viene valutata solo se le ore di permesso non sono
     // uguali o superiori alla mezza giornata e l'opzione è attiva
     let lunchable = (mPP < settings.options.halfday) && settings.options.checklunch;
@@ -172,8 +183,13 @@ const default_options = {
           mP = p - settings.options.max_lunch;
           p = settings.options.max_lunch;
         }
-        i.L = u.time(p).v; // U.getTime(p);
-      } else i.lunch = false;
+        const lt = u.time(p);
+        i.L = lt.v; // U.getTime(p);
+        state.lunch.startm = lt.t;
+      } else {
+        if (lunch && !state.lunch.endm) state.lunch.endm = m1;
+        i.lunch = false;
+      }
       m2 = i.u.t;
       lastok = (m2 > m1);
       // se l'intervallo è valido aggiunge le ore di lavoro
@@ -222,7 +238,8 @@ const default_options = {
     const e = u.time(elapsedm);
     u.i('exit-elapsed').innerHTML = e.v;
     state.getout = state.exitm > default_options.min_e && elapsedm <= 0;
-    u.toggleClass(BODY, 'get-out', state.getout);
+    u.toggleClass(BODY, 'get-out', state.getout && !state.lock);
+    _graph(n);
   }
 
   function _focus(id, type) {
@@ -256,23 +273,43 @@ const default_options = {
 
   function _parse(str) {
     str = str||'';
+    str = str.replace(/[\r\n]/g, ' ');
     let m, values = [];
-    const rgx = /(\d+\/\d+\/\d+).*?(\d+).*?(\d+).*?(\w+)/gmi;
-    while ((m = rgx.exec(str)) !== null) {
-      if (m.index === rgx.lastIndex) rgx.lastIndex++;
+    const rgx = {
+      tx:/(\d{2}\/\d{2}\/\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?([EU])/g,
+      x: /(\d{2}\/\d{2}\/\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?([EU])/g,
+      o: {data:1, h:2, m:3, k:4} };
+    if (!rgx.tx.test(str)) return console.warn('Unrecognized text!', str);
+    while ((m = rgx.x.exec(str)) !== null) {
+      if (m.index === rgx.x.lastIndex) rgx.x.lastIndex++;
       values.push(m);
     }
     if (values.length>0) {
       // sceglie il giorno da considerare
-      const day = values[0][1];
+      const day = values[0][rgx.o.data];
       const rows = [];
-      values.forEach((v) => (v[1] === day) ? rows.push(u.E(v[2], v[3], v[4])) : null);
+      values.forEach((v) => (v[rgx.o.data] === day) ? rows.push(u.E(v[rgx.o.h], v[rgx.o.m], v[rgx.o.k])) : null);
       rows.sort((v1,v2) => v1.t - v2.t);
       _insert(rows);
     }
   }
 
+  function _graph(now) {
+    const graph_width = 1000;
+    const _v = (x) => (((x - state.startm) * graph_width) / (state.exitm - state.startm)).toFixed(0);
+    const data = {
+      w1: _v(now.t),
+      x2: _v(state.lunch.startm),
+      w2: _v(state.lunch.endm) - _v(state.lunch.startm)
+    };
+
+    u.set('graph-base', 'width', data.w1);
+    u.set('graph-lunch', 'x', data.x2);
+    u.set('graph-lunch', 'width', data.w2);
+  }
+
   w.calc = function(e) {
+    state.lock = false;
     const value = e.target.value;
     const type = e.target.id[0];
     const index = parseInt(e.target.id.substr(2));
@@ -290,6 +327,10 @@ const default_options = {
     const txt = e.clipboardData.getData('Text');
     _parse(txt);
     _refresh();
+  }, false);
+
+  w.addEventListener('click', function(e){
+    if (state.getout) state.lock = true;
   }, false);
 
   setInterval(() => _checkTime(), 1000);
