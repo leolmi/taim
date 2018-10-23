@@ -362,8 +362,8 @@ const default_options = {
         pre = item;
       }
     });
-    const first = info.items[0];
-    const last = info.items[info.items.length>0?info.items.length-1:0];
+    const first = info.items[0]||{};
+    const last = info.items[info.items.length>0?info.items.length-1:0]||{};
     info.closed = !!last.UM;
     if (!info.closed) {
       last.UM = info.nowm >= last.EM ? info.nowm : last.EM + 10;
@@ -382,7 +382,7 @@ const default_options = {
     const now_angle = info.angle(info.nowm);
     const end = info.done ? last.end : Math.max(last.end||0, now_angle);
     // over tempo passato (tutto)
-    info.d = _d(first.start + 1, end - 1);
+    info.d = first.start ? _d(first.start + 1, end - 1) : '';
     // over (tempo non passato)
     if (last.UM > info.nowm) {
       info.over.start = now_angle;
@@ -515,6 +515,7 @@ const default_options = {
     const txt = e.clipboardData.getData('Text');
     _parse(txt);
     _refresh();
+    _checkTime();
   }, false);
 
   w.addEventListener('click', function(e){
@@ -527,4 +528,5 @@ const default_options = {
   setInterval(() => _checkTime(), 30000);
 
   _addLine();
+  _checkTime();
 })(this);
