@@ -100,7 +100,8 @@ input.taim-input {
     position: absolute;
     width: 100%;
     left: 0;
-    margin-top: 40px;
+    bottom: 0;
+    height: 100px;
 }
 
 .taim-get-out {
