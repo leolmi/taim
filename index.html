@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="taim-accent" id="exit-time"></div>
-        <div class="taim-accent taim-sub-title" id="exit-elapsed"></div>
+        <div class="taim-accent taim-sub-title"><span id="exit-done"></span><span id="exit-elapsed"></span></div>
         <div class="taim-accent taim-get-out taim-sub-title">GET OUT</div>
         <div class="taim-graph">
             <svg  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -33,6 +33,7 @@
                 <rect height="100" width="1000" fill="#333"></rect>
                 <rect id="graph-base" height="100" width="0" fill="yellowgreen"></rect>
                 <rect id="graph-lunch" x="0" height="100" width="0" fill="rgba(200,100,100,.4)"></rect>
+                <g fill="none" id="grid-lines"></g>
             </svg>
         </div>
     </div>

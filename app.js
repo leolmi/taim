@@ -24,8 +24,15 @@ const u = {
     const mn = ((m || '0') + '');
     return mn.length < 2 ? '0' + mn : mn;
   },
+  isDate(date) {
+    return Object.prototype.toString.call(date) === '[object Date]'
+  },
   // costruisce un oggetto con le info dell'orario
   E(h, m, type) {
+    if (u.isDate(h)) {
+      m = h.getMinutes();
+      h = h.getHours();
+    }
     const hr = (parseInt(h)||0);
     const mn = (parseInt(m)||0);
     const valid = !!(hr || mn);
@@ -34,7 +41,8 @@ const u = {
       h: hr,
       m: mn,
       t: u.m(hr,mn),
-      v: valid ? (hr+':'+u.min(mn)) : '' };
+      v: valid ? (hr+':'+u.min(mn)) : ''
+    };
   },
   // cerca l'input per id e aggiorna il valore se passato
   // poi restituisce il valore che contiene
@@ -42,6 +50,10 @@ const u = {
     const ele = document.getElementById(id);
     if (ele && v !== undefined) ele.value = v;
     return ele.value;
+  },
+  now() {
+    const now = new Date();
+    return u.E(now.getHours(), now.getMinutes());
   },
   // restituisce un oggetto con le info sull'ora scritta nella stringa/numero
   time(str) {
@@ -63,9 +75,11 @@ const u = {
   },
   // restiruisce i minuti totali a partire dal contenuto
   // stringa di un input
-  im(id) {
+  im(id, kind) {
     const v = u.input(id);
-    return u.time(v);
+    const t = u.time(v);
+    t.k = kind||'';
+    return t;
   },
   toggleClass(e, cn, active) {
     if (active) {
@@ -78,6 +92,13 @@ const u = {
     const e = u.i(id);
     if (isNaN(av)) av = 0;
     if (e) e.setAttribute(an, av);
+  },
+  format(str, o) {
+    for(let pn in o) {
+      const rgx = new RegExp('\\{'+pn+'\\}', 'gmi');
+      str = str.replace(rgx, o[pn]);
+    }
+    return str;
   }
  };
 // opzioni predefinite
@@ -106,7 +127,9 @@ const default_options = {
   const line = u.i('line-template').innerHTML;
   const dayHours = u.i('day-hours');
   const dayPerm = u.i('day-perm');
+  const grid = u.i('grid-lines');
   const BODY = document.getElementsByTagName('BODY')[0];
+  const line_template = '<line x1="{x}" y1="90" x2="{x}" y2="100" stroke="#222" stroke-width="4" />';
   let _counter=0;
   const taims = {};
   const state = {
@@ -141,8 +164,8 @@ const default_options = {
     const items = [];
     for (let i = 1; i <= _counter; i++) {
       items.push({
-        e: u.im('e-' + i),
-        u: u.im('u-' + i)
+        e: u.im('e-' + i, 'e'),
+        u: u.im('u-' + i, 'u')
       });
     }
     return items;
@@ -150,6 +173,10 @@ const default_options = {
 
   function _isLunch(e, u) {
     return (u > 0 && e > 0 && e > settings.options.start_lunch && u < settings.options.end_lunch);
+  }
+
+  function _isInLunch(m) {
+    return (m > 0 && m >= settings.options.start_lunch && m < settings.options.end_lunch);
   }
 
   function _refresh() {
@@ -160,6 +187,7 @@ const default_options = {
       firstE = 0, lastE = 0,
       lastok = false,
       lunch = false;
+    const nowm = u.now().t;
     state.lunch = {};
     // la pausa pranzo viene valutata solo se le ore di permesso non sono
     // uguali o superiori alla mezza giornata e l'opzione è attiva
@@ -171,9 +199,9 @@ const default_options = {
       /// il minimo ingresso è alle 8:30
       if (m1 < settings.options.min_e && settings.options.checkmine) m1 = settings.options.min_e;
       /// la pausa pranzo va da un minimo di 30min ad un massimo di 90min
+
       if (!lunch && _isLunch(m1, m2) && settings.options.checklunch) {
         lunch = true;
-        i.lunch = true;
         let p = m1 - m2;
         if (p < settings.options.min_lunch) {
           mP = settings.options.min_lunch - p;
@@ -184,11 +212,12 @@ const default_options = {
           p = settings.options.max_lunch;
         }
         const lt = u.time(p);
-        i.L = lt.v; // U.getTime(p);
-        state.lunch.startm = lt.t;
-      } else {
-        if (lunch && !state.lunch.endm) state.lunch.endm = m1;
-        i.lunch = false;
+        i.L = lt.v;
+        state.lunch.startm = m2;
+        state.lunch.endm = m1||nowm;
+      } else if (!lunch && !i.e.t && _isInLunch(m2)) {
+        state.lunch.startm = m2;
+        state.lunch.endm = nowm;
       }
       m2 = i.u.t;
       lastok = (m2 > m1);
@@ -235,8 +264,11 @@ const default_options = {
     const now = new Date();
     const n = u.E(now.getHours(), now.getMinutes());
     const elapsedm = state.exitm - n.t;
+    const donem = n.t - state.startm;
     const e = u.time(elapsedm);
+    const d = u.time(donem);
     u.i('exit-elapsed').innerHTML = e.v;
+    u.i('exit-done').innerHTML = d.v;
     state.getout = state.exitm > default_options.min_e && elapsedm <= 0;
     u.toggleClass(BODY, 'get-out', state.getout && !state.lock);
     _graph(n);
@@ -306,6 +338,15 @@ const default_options = {
     u.set('graph-base', 'width', data.w1);
     u.set('graph-lunch', 'x', data.x2);
     u.set('graph-lunch', 'width', data.w2);
+
+    let lines = '';
+    if (state.exitm > state.startm) {
+      const d1 = state.startm + (60 - (state.startm % 60));
+      for (let i = d1; i < state.exitm; i += 60) {
+        lines += u.format(line_template, {x:  _v(i)}) + '\n';
+      }
+    }
+    grid.innerHTML = lines;
   }
 
   w.calc = function(e) {

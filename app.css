@@ -32,6 +32,12 @@ body, html {
 .taim-sub-title {
     font-size: 1em;
 }
+.taim-sub-title > span {
+    margin: 0 10px;
+}
+#exit-elapsed {
+    color: #666;
+}
 
 .taim-icon {
     display: block;
